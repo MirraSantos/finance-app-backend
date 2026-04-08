@@ -1,0 +1,79 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String        @id @default(cuid())
+  email        String        @unique
+  name         String
+  password     String
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  transactions Transaction[]
+  categories   Category[]
+  budgets      Budget[]
+  goals        Goal[]
+}
+
+model Category {
+  id           String          @id @default(cuid())
+  userId       String?
+  user         User?           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name         String
+  color        String
+  icon         String
+  type         String
+  isDefault    Boolean         @default(false)
+  transactions Transaction[]
+  budgets      Budget[]
+  createdAt    DateTime        @default(now())
+}
+
+model Transaction {
+  id          String          @id @default(cuid())
+  userId      String
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amount      Decimal
+  type        String
+  categoryId  String
+  category    Category        @relation(fields: [categoryId], references: [id])
+  description String
+  date        DateTime
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+}
+
+model Budget {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id])
+  amount     Decimal 
+  month      Int
+  year       Int
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([userId, categoryId, month, year])
+}
+
+model Goal {
+  id            String    @id @default(cuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name          String
+  description   String?
+  targetAmount  Decimal  
+  currentAmount Decimal   @default(0)
+  deadline      DateTime?
+  color         String    @default("#6366f1")
+  completed     Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
