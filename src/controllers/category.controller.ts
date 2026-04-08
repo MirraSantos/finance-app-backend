@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express'
 import { z } from 'zod'
-import { PrismaClient, TransactionType } from '@prisma/client'
+import { PrismaClient } from '@prisma/client'
 
 const prisma = new PrismaClient()
 
@@ -8,7 +8,7 @@ const categorySchema = z.object({
   name: z.string().min(1, 'Nome obrigatório'),
   color: z.string().regex(/^#[0-9a-fA-F]{6}$/, 'Cor inválida (ex: #ff0000)'),
   icon: z.string().min(1, 'Ícone obrigatório'),
-  type: z.nativeEnum(TransactionType),
+  type: z.enum(['income', 'expense']),
 })
 
 export async function getAll(req: Request, res: Response, next: NextFunction) {
@@ -29,7 +29,14 @@ export async function create(req: Request, res: Response, next: NextFunction) {
   try {
     const data = categorySchema.parse(req.body)
     const category = await prisma.category.create({
-      data: { ...data, userId: req.userId, isDefault: false },
+      data: {
+        name: data.name,
+        color: data.color,
+        icon: data.icon,
+        type: data.type,
+        userId: req.userId,
+        isDefault: false,
+      },
     })
     return res.status(201).json({ data: category, message: 'Categoria criada com sucesso!' })
   } catch (err) {
@@ -47,7 +54,15 @@ export async function update(req: Request, res: Response, next: NextFunction) {
       return res.status(404).json({ error: 'Categoria não encontrada ou não tem permissão para editá-la.' })
     }
     const data = categorySchema.partial().parse(req.body)
-    const category = await prisma.category.update({ where: { id }, data })
+    const category = await prisma.category.update({
+      where: { id },
+      data: {
+        ...(data.name !== undefined && { name: data.name }),
+        ...(data.color !== undefined && { color: data.color }),
+        ...(data.icon !== undefined && { icon: data.icon }),
+        ...(data.type !== undefined && { type: data.type }),
+      },
+    })
     return res.json({ data: category, message: 'Categoria atualizada!' })
   } catch (err) {
     next(err)
