@@ -8,7 +8,7 @@ const categorySchema = z.object({
   name: z.string().min(1, 'Nome obrigatório'),
   color: z.string().regex(/^#[0-9a-fA-F]{6}$/, 'Cor inválida (ex: #ff0000)'),
   icon: z.string().min(1, 'Ícone obrigatório'),
-  type: z.enum(['income', 'expense']),
+  type: z.enum(['INCOME', 'EXPENSE']),
 })
 
 export async function getAll(req: Request, res: Response, next: NextFunction) {
